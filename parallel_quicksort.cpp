@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <ctime>
 #include <climits>
+#include <fstream>
+#include <chrono>
 
 void sequential_quicksort(std::vector<int>& arr, int low, int high) {
     if (low >= high) return;
@@ -25,7 +27,6 @@ void sequential_quicksort(std::vector<int>& arr, int low, int high) {
     sequential_quicksort(arr, pivot_pos + 1, high);
 }
 
-// Función para dividir el array entre los procesos
 std::vector<int> scatter_data(const std::vector<int>& data, int rank, int size) {
     int total_size = data.size();
     int local_size = total_size / size;
@@ -39,7 +40,6 @@ std::vector<int> scatter_data(const std::vector<int>& data, int rank, int size) 
     return local_data;
 }
 
-// Función para reunir los datos ordenados
 std::vector<int> gather_data(const std::vector<int>& local_data, int rank, int size, int total_size) {
     std::vector<int> gathered_data(total_size);
     
@@ -54,6 +54,13 @@ std::vector<int> gather_data(const std::vector<int>& local_data, int rank, int s
     return gathered_data;
 }
 
+void write_performance_data(const std::string& filename, int array_size, int num_procs, double time_taken) {
+    std::ofstream outfile;
+    outfile.open(filename, std::ios_base::app); // Modo append
+    outfile << array_size << "," << num_procs << "," << time_taken << "\n";
+    outfile.close();
+}
+
 int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
     
@@ -61,49 +68,52 @@ int main(int argc, char** argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     
-    const int ARRAY_SIZE = 20 - (20 % size);
-    std::vector<int> data(ARRAY_SIZE);
+    // Diferentes tamaños de array para pruebas
+    std::vector<int> array_sizes = {1000, 5000, 10000, 50000, 100000};
     
-    // Solo el proceso 0 genera los datos iniciales
-    if (rank == 0) {
-        srand(time(nullptr));
-        for (int i = 0; i < ARRAY_SIZE; i++) {
-            data[i] = rand() % 1000;
+    for (int ARRAY_SIZE : array_sizes) {
+        // Ajustar tamaño para que sea divisible por el número de procesos
+        ARRAY_SIZE = ARRAY_SIZE - (ARRAY_SIZE % size);
+        std::vector<int> data(ARRAY_SIZE);
+        
+        if (rank == 0) {
+            // Inicializar datos
+            srand(time(nullptr));
+            for (int i = 0; i < ARRAY_SIZE; i++) {
+                data[i] = rand() % 1000;
+            }
         }
         
-        std::cout << "Array original:" << std::endl;
-        for (int i = 0; i < ARRAY_SIZE; i++) {
-            std::cout << data[i] << " ";
-        }
-        std::cout << std::endl;
-    }
-    
-    // Broadcast the initial data to all processes
-    MPI_Bcast(data.data(), ARRAY_SIZE, MPI_INT, 0, MPI_COMM_WORLD);
-    
-    // Distribuir datos entre procesos
-    std::vector<int> local_data = scatter_data(data, rank, size);
-    
-    // Ordenar datos locales
-    sequential_quicksort(local_data, 0, local_data.size() - 1);
-    
-    // Sincronizar procesos
-    MPI_Barrier(MPI_COMM_WORLD);
-    
-    // Reunir datos ordenados
-    std::vector<int> sorted_data = gather_data(local_data, rank, size, ARRAY_SIZE);
-    
-    // Proceso 0 realiza la mezcla final y muestra resultados
-    if (rank == 0) {
-        std::cout << "\nArray ordenado:" << std::endl;
-        for (int i = 0; i < ARRAY_SIZE; i++) {
-            std::cout << sorted_data[i] << " ";
-        }
-        std::cout << std::endl;
+        // Sincronizar todos los procesos antes de empezar la medición
+        MPI_Barrier(MPI_COMM_WORLD);
+        double start_time = MPI_Wtime();
         
-        // Verificar si está ordenado
-        bool is_sorted = std::is_sorted(sorted_data.begin(), sorted_data.end());
-        std::cout << "Array ordenado correctamente: " << (is_sorted ? "Sí" : "No") << std::endl;
+        // Broadcast los datos iniciales
+        MPI_Bcast(data.data(), ARRAY_SIZE, MPI_INT, 0, MPI_COMM_WORLD);
+        
+        // Distribuir datos
+        std::vector<int> local_data = scatter_data(data, rank, size);
+        
+        // Ordenar datos locales
+        sequential_quicksort(local_data, 0, local_data.size() - 1);
+        
+        // Reunir datos ordenados
+        std::vector<int> sorted_data = gather_data(local_data, rank, size, ARRAY_SIZE);
+        
+        // Sincronizar antes de medir el tiempo final
+        MPI_Barrier(MPI_COMM_WORLD);
+        double end_time = MPI_Wtime();
+        double time_taken = end_time - start_time;
+        
+        // Solo el proceso 0 escribe los resultados
+        if (rank == 0) {
+            write_performance_data("quicksort_performance.txt", ARRAY_SIZE, size, time_taken);
+            
+            // Verificar si está ordenado
+            bool is_sorted = std::is_sorted(sorted_data.begin(), sorted_data.end());
+            std::cout << "Array size: " << ARRAY_SIZE << ", Correctly sorted: " 
+                      << (is_sorted ? "Yes" : "No") << ", Time: " << time_taken << " seconds" << std::endl;
+        }
     }
     
     MPI_Finalize();
