@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Compile the code
-mpic++ v3.cpp -o v3
+mpic++ parallel_quicksort.cpp -o parallel_quicksort
 
 # Array sizes to test
 sizes=(100 1000 10000)
