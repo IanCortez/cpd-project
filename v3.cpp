@@ -70,7 +70,15 @@ int main(int argc, char** argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    int n = 18;
+    // Get array size from command line
+    if (argc != 2) {
+        if (rank == 0) {
+            std::cerr << "Usage: " << argv[0] << " <array_size>\n";
+        }
+        MPI_Finalize();
+        return -1;
+    }
+    int n = std::stoi(argv[1]);
 
     if (!esCuadradoPerfecto(size)) {
         if (rank == 0) {
@@ -80,6 +88,9 @@ int main(int argc, char** argv) {
         return -1;
     }
 
+    // Start timing
+    double start_time = MPI_Wtime();
+
     //Generamos valores aleatorios en el proceso 0
     std::vector<char> datos_totales;
 
@@ -88,9 +99,9 @@ int main(int argc, char** argv) {
         for (int i = 0; i < n; ++i) {
             datos_totales.push_back('a' + (std::rand() % 26));
         }
-        std::cout << "Datos iniciales: ";
-        for (char c : datos_totales) std::cout << c << " ";
-        std::cout << std::endl;
+        //std::cout << "Datos iniciales: ";
+        //for (char c : datos_totales) std::cout << c << " ";
+        //std::cout << std::endl;
     }
 
 
@@ -244,11 +255,11 @@ int main(int argc, char** argv) {
     }
 
     //Print local ranking
-    std::cout << "Proceso " << rank << " Local Ranking: ";
-    for (int ranking : local_ranking) {
-        std::cout << ranking << " ";
-    }
-    std::cout << std::endl;
+    // std::cout << "Proceso " << rank << " Local Ranking: ";
+    // for (int ranking : local_ranking) {
+    //     std::cout << ranking << " ";
+    // }
+    // std::cout << std::endl;
 
     /*
     ====================================================================
@@ -288,16 +299,23 @@ int main(int argc, char** argv) {
                fila_comm);            //Comunicador de fila
 
     //Mostrar el ranking global para los procesos en la diagonal
-    if (es_diagonal) {
-        std::cout << "Proceso " << rank << " Ranking Global: ";
-        for (int r : global_ranking) {
-            std::cout << r << " ";
-        }
-        std::cout << std::endl;
-    }
+    // if (es_diagonal) {
+    //     std::cout << "Proceso " << rank << " Ranking Global: ";
+    //     for (int r : global_ranking) {
+    //         std::cout << r << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
 
     MPI_Comm_free(&fila_comm);
     
+
+    // End timing
+    double end_time = MPI_Wtime();
+    
+    if (rank == 0) {
+        std::cout << n << "," << size << "," << (end_time - start_time) << std::endl;
+    }
 
     MPI_Finalize();
     return 0;
