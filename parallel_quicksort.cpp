@@ -110,9 +110,9 @@ int main(int argc, char** argv) {
             write_performance_data("quicksort_performance.txt", ARRAY_SIZE, size, time_taken);
             
             // Verificar si está ordenado
-            bool is_sorted = std::is_sorted(sorted_data.begin(), sorted_data.end());
-            std::cout << "Array size: " << ARRAY_SIZE << ", Correctly sorted: " 
-                      << (is_sorted ? "Yes" : "No") << ", Time: " << time_taken << " seconds" << std::endl;
+            // bool is_sorted = std::is_sorted(sorted_data.begin(), sorted_data.end());
+            // std::cout << "Array size: " << ARRAY_SIZE << ", Correctly sorted: " 
+            //           << (is_sorted ? "Yes" : "No") << ", Time: " << time_taken << " seconds" << std::endl;
         }
     }
     

@@ -25,7 +25,7 @@ plt.xscale('log')
 plt.yscale('log')
 
 # Guardar la gráfica
-plt.savefig('ranking_performance.png')
+plt.savefig('quicksort_performance.png')
 plt.close()
 
 # Calcular speedup
