@@ -179,46 +179,39 @@ int main(int argc, char** argv) {
     //int fila = rank / raiz_p; //Fila a la que pertenece el proceso
     //int columna = rank % raiz_p; //Columna a la que pertenece el proceso
 
-    //Crear comunicador para cada fila
+    //Mantenemos las variables existentes
+    //int raiz_p = std::sqrt(size);
+    //int fila = rank / raiz_p;
+    //int columna = rank % raiz_p;
+
+    //Crear comunicador para cada fila (mantenemos esto igual)
     MPI_Comm fila_comm;
-    color = fila;
-    MPI_Comm_split(MPI_COMM_WORLD, color, rank, &fila_comm);
+    MPI_Comm_split(MPI_COMM_WORLD, fila, rank, &fila_comm);
 
-    int fila_rank, fila_size;
-    MPI_Comm_rank(fila_comm, &fila_rank);
-    MPI_Comm_size(fila_comm, &fila_size);
-
-    //Verificar si este proceso está en la diagonal
-    bool es_diagonal = (fila == columna);
-    
-    //Vector para los datos recibidos (todos los procesos lo necesitan)
+    //Vector para los datos recibidos
     std::vector<char> datos_recibidos(elementos_por_proceso * columna_size);
 
-    //Si es diagonal, copia sus datos_columna a datos_recibidos
+
+    bool es_diagonal = (fila == columna);
+
+    //Si es proceso diagonal, copia sus datos_columna
     if (es_diagonal) {
         datos_recibidos = datos_columna;
     }
 
-    //Cada proceso en la diagonal hace broadcast de sus datos
-    for (int i = 0; i < raiz_p; i++) {
-        //Si estamos en la fila i
-        if (fila == i) {
-            int origen_broadcast = i;
-            
-            MPI_Bcast(datos_recibidos.data(),
-                     elementos_por_proceso * columna_size,
-                     MPI_CHAR,
-                     origen_broadcast,
-                     fila_comm);
+    //Broadcast desde el proceso diagonal (columna == fila) a todos en su fila
+    MPI_Bcast(datos_recibidos.data(), 
+            elementos_por_proceso * columna_size, 
+            MPI_CHAR, 
+            fila,  // El proceso diagonal tiene el mismo número de columna que de fila
+            fila_comm);
 
 
-            // //Mostrar los datos después del broadcast
-            // std::cout << "Proceso " << rank << " tiene después del Broadcast: ";
-            // for (char c : datos_recibidos) std::cout << c << " ";
-            // std::cout << std::endl;
-
-        }
-    }
+    // Opcional: Verificación de datos
+    // std::cout << "Proceso " << rank << " (fila=" << fila << ", col=" << columna 
+    //           << ") tiene después del Broadcast optimizado: ";
+    // for (char c : datos_recibidos) std::cout << c << " ";
+    // std::cout << std::endl;
 
     //MPI_Comm_free(&fila_comm); -> En paso 6 recien lo ponemos por que vamos a volver a operar en filas
 
