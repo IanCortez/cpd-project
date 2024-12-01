@@ -4,10 +4,10 @@
 mpic++ v3.cpp -o v3
 
 # Array sizes to test
-sizes=(100 1000 10000)
+sizes=(10 100 1000 10000 100000 1000000)
 
 # Number of processes to test (must be perfect squares)
-processes=(1 4 9)
+processes=(1 4 9 25 36 49)
 
 # Output file
 output_file="ranking_performance.txt"
@@ -18,7 +18,8 @@ for size in "${sizes[@]}"; do
         echo "Running with size $size and $procs processes..."
         # Run 5 times and take average
         for i in {1..5}; do
-            mpirun --oversubscribe -np $procs ./v3 $size >> $output_file
+            # mpirun --oversubscribe -np $procs ./v3 $size >> $output_file
+            mpirun -np $procs ./v3 $size >> $output_file
         done
     done
 done

@@ -69,11 +69,11 @@ int main(int argc, char** argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     
     // Diferentes tamaños de array para pruebas
-    std::vector<int> array_sizes = {1000, 5000, 10000, 50000, 100000};
+    std::vector<int> array_sizes = {10, 100, 1000, 10000, 100000, 1000000};
     
     for (int ARRAY_SIZE : array_sizes) {
         // Ajustar tamaño para que sea divisible por el número de procesos
-        ARRAY_SIZE = ARRAY_SIZE - (ARRAY_SIZE % size);
+        // ARRAY_SIZE = ARRAY_SIZE - (ARRAY_SIZE % size);
         std::vector<int> data(ARRAY_SIZE);
         
         if (rank == 0) {

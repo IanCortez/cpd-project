@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Leer los datos del archivo
-df = pd.read_csv('quicksort_performance.txt', names=['array_size', 'num_procs', 'time'])
+df = pd.read_csv('ranking_performance.txt', names=['array_size', 'num_procs', 'time'])
 
 # Crear gráfica de tiempo vs tamaño del array para diferentes números de procesadores
 plt.figure(figsize=(10, 6))
@@ -18,14 +18,14 @@ for num_procs in sorted(df['num_procs'].unique()):
 
 plt.xlabel('Tamaño del Array')
 plt.ylabel('Tiempo (segundos)')
-plt.title('Análisis de Rendimiento del Quicksort Paralelo')
+plt.title('Análisis de Rendimiento del Ranking Paralelo')
 plt.legend()
 plt.grid(True)
 plt.xscale('log')
 plt.yscale('log')
 
 # Guardar la gráfica
-plt.savefig('quicksort_performance.png')
+plt.savefig('ranking_performance.png')
 plt.close()
 
 # Calcular speedup
@@ -56,12 +56,12 @@ max_procs = max(df['num_procs'])
 plt.plot([1, max_procs], [1, max_procs], 'k--', label='Speedup ideal')
 plt.xlabel('Número de Procesadores')
 plt.ylabel('Speedup')
-plt.title('Análisis de Speedup del Quicksort Paralelo')
+plt.title('Análisis de Speedup del Ranking Paralelo')
 plt.legend()
 plt.grid(True)
 
 # Guardar la gráfica de speedup
-plt.savefig('quicksort_speedup.png')
+plt.savefig('ranking_speedup.png')
 plt.close()
 
 # Calcular y mostrar estadísticas
